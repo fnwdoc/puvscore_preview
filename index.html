@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador PUV Score - FNW Assessoria</title>
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --bg-editor: #0f172a;
+            --bg-panel: #1e293b;
+            --text-editor: #f8fafc;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --info-bg: #FFFFFF;
+            --info-title: #424242;
+            --info-text: #757575;
+            --info-light: #E0E0E0;
+            --info-mid: #9E9E9E;
+            --info-border: #F5F5F5;
+            --info-bar: #F0F0F0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-editor);
+            color: var(--text-editor);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 480px;
+            flex-shrink: 0;
+            background-color: var(--bg-panel);
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .resizer {
+            width: 6px;
+            background-color: rgba(255,255,255,0.05);
+            cursor: col-resize;
+            height: 100vh;
+            flex-shrink: 0;
+            z-index: 11;
+            transition: background-color 0.2s;
+        }
+        .resizer:hover, .resizer.active { background-color: var(--accent); }
+        .preview-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            padding: 2rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .section-header {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid rgba(59,130,246,0.3);
+            padding-bottom: 0.5rem;
+            margin: 2rem 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-header:first-child { margin-top: 0; }
+        .section-header i { font-size: 1.4rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        .form-control {
+            width: 100%;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+        }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 0.5rem;
+        }
+        .slider-row input[type="range"] {
+            flex-grow: 1;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .slider-badge {
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            min-width: 32px;
+            text-align: center;
+        }
+        .btn-action {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            margin-top: 2rem;
+            box-shadow: 0 4px 15px rgba(59,130,246,0.4);
+        }
+        .btn-action:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        .btn-ai {
+            width: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(16,185,129,0.4);
+        }
+        .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.6); }
+        .btn-ai:disabled { background: #475569; box-shadow: none; cursor: not-allowed; transform: none; }
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .a4-canvas {
+            width: 794px;
+            background: var(--info-bg);
+            border-radius: 8px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform-origin: top center;
+            transition: transform 0.1s ease;
+            flex-shrink: 0;
+            margin: 0;
+        }
+        .block { padding: 2.5rem 3.5rem; border-bottom: 1px solid var(--info-border); }
+        .block:last-child { border-bottom: none; }
+        .b1-header { display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+        .b1-content { flex: 1; }
+        .b1-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: var(--info-title);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+        .b1-subtitle {
+            font-size: 1.1rem;
+            color: var(--info-text);
+            line-height: 1.4;
+        }
+        .logo-placeholder {
+            width: 220px;
+            height: 90px;
+            border: 2px dashed var(--info-mid);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--info-mid);
+            font-weight: bold;
+            overflow: hidden;
+            background: #FAFAFA;
+        }
+        .logo-placeholder img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .b2-score { text-align: center; padding: 1.5rem 0; }
+        .b2-score-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--info-title);
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+        }
+        .gauge-wrapper {
+            position: relative;
+            width: 260px;
+            height: 130px;
+            margin: 0 auto 1.5rem auto;
+        }
+        .gauge-svg { width: 100%; height: 100%; }
+        .gauge-bg-path {
+            fill: none;
+            stroke: var(--info-light);
+            stroke-width: 12;
+            stroke-linecap: round;
+        }
+        .gauge-val-path {
+            fill: none;
+            stroke: url(#grad);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 125.6;
+            stroke-dashoffset: 125.6;
+            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .gauge-data {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gauge-number {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 4.5rem;
+            color: var(--info-title);
+            line-height: 0.9;
+        }
+        .gauge-label {
+            font-size: 1rem;
+            color: var(--info-mid);
+            font-weight: 700;
+        }
+        .score-meaning {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            background: var(--info-light);
+            color: var(--info-title);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .b3-criteria { display: flex; flex-direction: column; gap: 1.2rem; padding: 2rem 3.5rem; }
+        .crit-item { display: flex; flex-direction: column; gap: 0.4rem; }
+        .crit-head { display: flex; justify-content: space-between; align-items: center; }
+        .crit-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: var(--info-title);
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .crit-name i { color: var(--info-mid); font-size: 1.2rem; }
+        .crit-val { font-weight: 800; color: var(--info-title); }
+        .crit-bar { width: 100%; height: 6px; background: var(--info-bar); border-radius: 3px; overflow: hidden; }
+        .crit-fill { height: 100%; background: var(--info-mid); width: 0%; transition: 0.6s ease; }
+        .crit-just {
+            font-size: 0.9rem;
+            color: var(--info-text);
+            padding-left: 1.7rem;
+            position: relative;
+        }
+        .crit-just::before {
+            content: "•";
+            position: absolute;
+            left: 0.5rem;
+            color: var(--info-mid);
+            font-weight: bold;
+        }
+        .b4-actions { background: rgba(0,0,0,0.02); }
+        .b4-title {
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            color: var(--info-title);
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        .action-card {
+            background: white;
+            border: 1px solid var(--info-light);
+            border-radius: 8px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .ac-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--info-light);
+            color: var(--info-title);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem auto;
+        }
+        .ac-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            color: var(--info-title);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+        .ac-desc {
+            font-size: 0.85rem;
+            color: var(--info-text);
+            line-height: 1.5;
+        }
+        .b5-footer {
+            margin-top: auto;
+            background: #424242;
+            color: white;
+            padding: 3rem 3.5rem;
+        }
+        .b5-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--info-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .b5-abordagem {
+            font-size: 1.2rem;
+            font-style: italic;
+            line-height: 1.5;
+            padding-left: 1.5rem;
+            border-left: 4px solid var(--info-mid);
+            margin-bottom: 2rem;
+        }
+        .b5-recom {
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 6px;
+            font-family: 'Roboto', monospace;
+            font-size: 0.95rem;
+            color: #E0E0E0;
+            line-height: 1.5;
+            position: relative;
+        }
+        .b5-recom::after {
+            content: "[ ACESSO AO PLANO COMPLETO ]";
+            display: block;
+            margin-top: 1rem;
+            font-weight: bold;
+            color: var(--info-mid);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem;
+        }
+        .svg-defs { width: 0; height: 0; position: absolute; }
+        @media print {
+            body { background: white; height: auto; display: block; overflow: visible; }
+            .sidebar, .resizer { display: none; }
+            .preview-area { padding: 0; background: none; display: block; overflow: visible; height: auto; }
+            .a4-canvas {
+                width: 100% !important;
+                height: auto !important;
+                box-shadow: none;
+                border-radius: 0;
+                transform: scale(1) !important;
+                margin: 0 !important;
+                page-break-after: always;
+            }
+            .b4-actions { page-break-before: always; }
+            @page { size: A4 portrait; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAINEL LATERAL (EDITOR) -->
+<aside class="sidebar">
+
+    <div class="section-header">
+        <i class="material-icons-round">smart_toy</i> Gerar com IA
+    </div>
+    <div class="form-group">
+        <label>Provedor de IA</label>
+        <select class="form-control" id="f_ai_provider" style="margin-bottom: 0.75rem;" onchange="loadApiKey()">
+            <option value="gemini">Google Gemini</option>
+            <option value="groq">Groq (Rápida)</option>
+        </select>
+        <label>Chave de API (Salva no navegador)</label>
+        <input type="password" class="form-control" id="f_api_key" placeholder="Cole sua API Key aqui..." oninput="saveApiKey()">
+    </div>
+    <div class="form-group">
+        <label>URL do Site do Cliente</label>
+        <input type="url" class="form-control" id="f_ai_url" placeholder="https://exemplo.com.br">
+    </div>
+    <button class="btn-ai" id="btn_generate" onclick="generateWithAI()">
+        <div class="spinner" id="ai_spinner"></div>
+        <i class="material-icons-round" id="ai_icon">auto_awesome</i>
+        <span id="ai_btn_text">Gerar Automático</span>
+    </button>
+    <button class="btn-action" onclick="loadLastDataset()" style="margin-bottom: 2rem; margin-top: -1rem; background: #334155; box-shadow: none; font-size: 0.85rem;">
+        <i class="material-icons-round" style="font-size: 1rem;">history</i> Carregar Último Teste
+    </button>
+
+    <div class="section-header">
+        <i class="material-icons-round">settings_applications</i> Dados Base
+    </div>
+    <div class="form-group">
+        <label>Nome da Empresa / Cliente</label>
+        <input type="text" class="form-control" id="f_empresa" value="Tech Indústria" oninput="updateAll()">
+    </div>
+    <div class="form-group">
+        <label>URL do Logo (Recomendado PNG transparente)</label>
+        <input type="text" class="form-control" id="f_logo" placeholder="https://..." oninput="updateAll()">
+    </div>
+
+    <div class="section-header">
+        <i class="material-icons-round">category</i> Classificação Inicial
+    </div>
+    <div class="form-group">
+        <label>Classificação do Bloco</label>
+        <input type="text" class="form-control" id="f_class_bloco" value="2 - Produtos Digitais/Recorrência Travada" oninput="updateAll()">
+        <label style="margin-top: 0.5rem">Justificativa do Bloco</label>
+        <textarea class="form-control" id="f_class_just" rows="3" oninput="updateAll()">O produto é uma plataforma SaaS...</textarea>
+    </div>
+    <div class="form-group">
+        <label>Resposta à Pergunta-Eixo</label>
+        <textarea class="form-control" id="f_perg_eixo" rows="3" oninput="updateAll()">SIM, DE FORMA DIRETA E PRÁTICA. A página é extremamente eficaz...</textarea>
+    </div>
+
+    <div class="section-header">
+        <i class="material-icons-round">rule</i> Score de Critérios (0-4)
+    </div>
+
+    <!-- CRITÉRIO 1: Diferenciação e Posicionamento -->
+    <div class="form-group">
+        <label>1. Diferenciação e Posicionamento</label>
+        <div class="slider-row">
+            <input type="range" id="f_c1_v" min="0" max="4" value="2" oninput="updateAll()">
+            <div class="slider-badge" id="b_c1">2</div>
+        </div>
+        <textarea class="form-control" id="f_c1_j" oninput="updateAll()">Marca não se diferencia claramente dos concorrentes; posicionamento genérico.</textarea>
+    </div>
+
+    <!-- CRITÉRIO 2: Clareza da Proposta -->
+    <div class="form-group">
+        <label>2. Clareza da Proposta</label>
+        <div class="slider-row">
+            <input type="range" id="f_c2_v" min="0" max="4" value="1" oninput="updateAll()">
+            <div class="slider-badge" id="b_c2">1</div>
+        </div>
+        <textarea class="form-control" id="f_c2_j" oninput="updateAll()">Foco excessivo em características técnicas, não no benefício para o cliente.</textarea>
+    </div>
+
+    <!-- CRITÉRIO 3: Linguagem e Conexão -->
+    <div class="form-group">
+        <label>3. Linguagem e Conexão</label>
+        <div class="slider-row">
+            <input type="range" id="f_c3_v" min="0" max="4" value="3" oninput="updateAll()">
+            <div class="slider-badge" id="b_c3">3</div>
+        </div>
+        <textarea class="form-control" id="f_c3_j" oninput="updateAll()">Tom adequado ao público, mas ainda usa alguns jargões internos.</textarea>
+    </div>
+
+    <!-- CRITÉRIO 4: Credibilidade e Confiança -->
+    <div class="form-group">
+        <label>4. Credibilidade e Confiança</label>
+        <div class="slider-row">
+            <input type="range" id="f_c4_v" min="0" max="4" value="1" oninput="updateAll()">
+            <div class="slider-badge" id="b_c4">1</div>
+        </div>
+        <textarea class="form-control" id="f_c4_j" oninput="updateAll()">Faltam provas sociais, depoimentos ou cases que gerem confiança.</textarea>
+    </div>
+
+    <!-- CRITÉRIO 5: Jornada e CTA -->
+    <div class="form-group">
+        <label>5. Jornada e CTA</label>
+        <div class="slider-row">
+            <input type="range" id="f_c5_v" min="0" max="4" value="0" oninput="updateAll()">
+            <div class="slider-badge" id="b_c5">0</div>
+        </div>
+        <textarea class="form-control" id="f_c5_j" oninput="updateAll()">Não há um caminho claro; CTA único de alto compromisso ('Fale conosco').</textarea>
+    </div>
+
+    <div class="section-header">
+        <i class="material-icons-round">auto_awesome</i> Oportunidades (Top 3)
+    </div>
+    <div class="form-group">
+        <label>Ação 1: Ajuste de Narrativa</label>
+        <input type="text" class="form-control" id="f_a1_t" value="Definir Posicionamento Único" style="margin-bottom:0.4rem;" oninput="updateAll()">
+        <textarea class="form-control" id="f_a1_d" rows="2" oninput="updateAll()">Criar uma proposta de valor clara que separe a empresa dos concorrentes.</textarea>
+    </div>
+    <div class="form-group">
+        <label>Ação 2: Funil de Educação</label>
+        <input type="text" class="form-control" id="f_a2_t" value="Produzir Provas Sociais" style="margin-bottom:0.4rem;" oninput="updateAll()">
+        <textarea class="form-control" id="f_a2_d" rows="2" oninput="updateAll()">Coletar depoimentos e estudos de caso para inserir ao longo da página.</textarea>
+    </div>
+    <div class="form-group">
+        <label>Ação 3: Esteira de Produtos</label>
+        <input type="text" class="form-control" id="f_a3_t" value="Estruturar Jornada com Micro-CTAs" style="margin-bottom:0.4rem;" oninput="updateAll()">
+        <textarea class="form-control" id="f_a3_d" rows="2" oninput="updateAll()">Criar CTAs progressivos (materiais ricos, diagnóstico) antes do contato comercial.</textarea>
+    </div>
+
+    <div class="section-header">
+        <i class="material-icons-round">forum</i> Fechamento FNW
+    </div>
+    <div class="form-group">
+        <label>Frase de Abordagem para o Dono</label>
+        <textarea class="form-control" id="f_ab" style="font-style:italic" oninput="updateAll()">"Sua página comunica bem o que você faz, mas não mostra por que o cliente deveria escolher você em vez dos outros."</textarea>
+    </div>
+    <div class="form-group">
+        <label>Recomendação Incompleta</label>
+        <textarea class="form-control" id="f_re" oninput="updateAll()">Para destravar essa receita e construir autoridade, é preciso estruturar uma...</textarea>
+    </div>
+    <div class="form-group" style="margin-bottom: 2rem;">
+        <label>Conclusão (Opcional)</label>
+        <textarea class="form-control" id="f_conclusao" rows="4" oninput="updateAll()">A empresa tem bons fundamentos, mas precisa reforçar diferenciação e credibilidade para reduzir o atrito na conversão.</textarea>
+    </div>
+
+    <button class="btn-action" onclick="window.print()">
+        <i class="material-icons-round">print</i> Exportar PDF
+    </button>
+</aside>
+
+<!-- RESIZER -->
+<div class="resizer" id="resizer"></div>
+
+<!-- ÁREA DE PREVIEW (INFOGRÁFICO) -->
+<main class="preview-area" id="preview-area">
+    <svg class="svg-defs">
+        <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#9E9E9E" />
+                <stop offset="100%" stop-color="#424242" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div class="a4-canvas" id="canvas">
+        <!-- BLOCO 1: HEADER -->
+        <div class="block b1-header">
+            <div class="b1-content">
+                <div class="b1-title" id="i_title">DIAGNÓSTICO PUV SCORE</div>
+                <div class="b1-subtitle" id="i_subtitle">A narrativa da sua empresa precisa de ajustes estruturais.</div>
+            </div>
+            <div class="logo-placeholder" id="i_logobox">
+                <span id="i_logotext">TECH INDÚSTRIA</span>
+                <img id="i_logoimg" src="" alt="Logo" style="display:none;">
+            </div>
+        </div>
+
+        <!-- BLOCO 2: GAUGE CENTRAL -->
+        <div class="block b2-score">
+            <div class="b2-score-title">MÉTRICA DE AUTORIDADE E CLAREZA</div>
+            <div class="gauge-wrapper">
+                <svg viewBox="0 0 100 50" class="gauge-svg">
+                    <path class="gauge-bg-path" d="M 10 50 A 40 40 0 0 1 90 50" />
+                    <path class="gauge-val-path" id="i_gaugepath" d="M 10 50 A 40 40 0 0 1 90 50" />
+                </svg>
+                <div class="gauge-data">
+                    <div class="gauge-number" id="i_scorenum">0</div>
+                    <div class="gauge-label">/ 20 PTS</div>
+                </div>
+            </div>
+            <div class="score-meaning" id="i_meaning">MÉDIA: Inconsistente. Oportunidade de otimização.</div>
+        </div>
+
+        <!-- BLOCO 3: CRITÉRIOS (RÓTULOS ATUALIZados via JS) -->
+        <div class="block b3-criteria">
+            <div class="crit-item">
+                <div class="crit-head">
+                    <div class="crit-name"><i class="material-icons-round">star</i> Diferenciação e Posicionamento</div>
+                    <div class="crit-val" id="i_c1_v">2/4</div>
+                </div>
+                <div class="crit-bar"><div class="crit-fill" id="i_c1_f"></div></div>
+                <div class="crit-just" id="i_c1_j">-</div>
+            </div>
+            <div class="crit-item">
+                <div class="crit-head">
+                    <div class="crit-name"><i class="material-icons-round">wb_incandescent</i> Clareza da Proposta</div>
+                    <div class="crit-val" id="i_c2_v">1/4</div>
+                </div>
+                <div class="crit-bar"><div class="crit-fill" id="i_c2_f"></div></div>
+                <div class="crit-just" id="i_c2_j">-</div>
+            </div>
+            <div class="crit-item">
+                <div class="crit-head">
+                    <div class="crit-name"><i class="material-icons-round">chat</i> Linguagem e Conexão</div>
+                    <div class="crit-val" id="i_c3_v">3/4</div>
+                </div>
+                <div class="crit-bar"><div class="crit-fill" id="i_c3_f"></div></div>
+                <div class="crit-just" id="i_c3_j">-</div>
+            </div>
+            <div class="crit-item">
+                <div class="crit-head">
+                    <div class="crit-name"><i class="material-icons-round">verified</i> Credibilidade e Confiança</div>
+                    <div class="crit-val" id="i_c4_v">1/4</div>
+                </div>
+                <div class="crit-bar"><div class="crit-fill" id="i_c4_f"></div></div>
+                <div class="crit-just" id="i_c4_j">-</div>
+            </div>
+            <div class="crit-item">
+                <div class="crit-head">
+                    <div class="crit-name"><i class="material-icons-round">timeline</i> Jornada e CTA</div>
+                    <div class="crit-val" id="i_c5_v">0/4</div>
+                </div>
+                <div class="crit-bar"><div class="crit-fill" id="i_c5_f"></div></div>
+                <div class="crit-just" id="i_c5_j">-</div>
+            </div>
+        </div>
+
+        <!-- BLOCO 4: 3 AÇÕES -->
+        <div class="block b4-actions">
+            <div class="b4-title">TOP 3 AÇÕES ESTRATÉGICAS</div>
+            <div class="actions-grid">
+                <div class="action-card">
+                    <div class="ac-icon"><i class="material-icons-round">architecture</i></div>
+                    <div class="ac-title" id="i_a1_t">Título</div>
+                    <div class="ac-desc" id="i_a1_d">Desc</div>
+                </div>
+                <div class="action-card">
+                    <div class="ac-icon"><i class="material-icons-round">history_edu</i></div>
+                    <div class="ac-title" id="i_a2_t">Título</div>
+                    <div class="ac-desc" id="i_a2_d">Desc</div>
+                </div>
+                <div class="action-card">
+                    <div class="ac-icon"><i class="material-icons-round">rocket_launch</i></div>
+                    <div class="ac-title" id="i_a3_t">Título</div>
+                    <div class="ac-desc" id="i_a3_d">Desc</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOCO 5: FOOTER -->
+        <div class="block b5-footer">
+            <div class="b5-title"><i class="material-icons-round">insights</i> PERSPECTIVA DO CONSULTOR FNW</div>
+            <div class="b5-abordagem" id="i_ab">"Frase"</div>
+            <div class="b5-recom" id="i_re">Recom...</div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // ==================== ATUALIZAÇÃO DO PAINEL ====================
+    function updateAll() {
+        const emp = document.getElementById('f_empresa').value || 'SUA EMPRESA';
+        const logourl = document.getElementById('f_logo').value.trim();
+        const lbox = document.getElementById('i_logobox');
+        const ltxt = document.getElementById('i_logotext');
+        const limg = document.getElementById('i_logoimg');
+
+        if (logourl) {
+            limg.src = logourl;
+            limg.style.display = 'block';
+            ltxt.style.display = 'none';
+            lbox.style.border = 'none';
+        } else {
+            limg.style.display = 'none';
+            ltxt.style.display = 'block';
+            ltxt.innerText = emp.toUpperCase();
+            lbox.style.border = '2px dashed var(--info-mid)';
+        }
+
+        const c1 = parseInt(document.getElementById('f_c1_v').value) || 0;
+        const c2 = parseInt(document.getElementById('f_c2_v').value) || 0;
+        const c3 = parseInt(document.getElementById('f_c3_v').value) || 0;
+        const c4 = parseInt(document.getElementById('f_c4_v').value) || 0;
+        const c5 = parseInt(document.getElementById('f_c5_v').value) || 0;
+
+        document.getElementById('b_c1').innerText = c1;
+        document.getElementById('b_c2').innerText = c2;
+        document.getElementById('b_c3').innerText = c3;
+        document.getElementById('b_c4').innerText = c4;
+        document.getElementById('b_c5').innerText = c5;
+
+        const updateCrit = (n, v) => {
+            document.getElementById(`i_c${n}_v`).innerText = `${v}/4`;
+            document.getElementById(`i_c${n}_j`).innerText = document.getElementById(`f_c${n}_j`).value;
+            document.getElementById(`i_c${n}_f`).style.width = `${(v / 4) * 100}%`;
+        };
+        updateCrit(1, c1); updateCrit(2, c2); updateCrit(3, c3); updateCrit(4, c4); updateCrit(5, c5);
+
+        const updateAction = (n) => {
+            document.getElementById(`i_a${n}_t`).innerText = document.getElementById(`f_a${n}_t`).value;
+            document.getElementById(`i_a${n}_d`).innerText = document.getElementById(`f_a${n}_d`).value;
+        };
+        updateAction(1); updateAction(2); updateAction(3);
+
+        document.getElementById('i_ab').innerText = document.getElementById('f_ab').value;
+        document.getElementById('i_re').innerText = document.getElementById('f_re').value;
+
+        const score = c1 + c2 + c3 + c4 + c5;
+        document.getElementById('i_scorenum').innerText = score;
+
+        const offset = 125.6 - (125.6 * (score / 20));
+        document.getElementById('i_gaugepath').style.strokeDashoffset = offset;
+
+        const title = document.getElementById('i_title');
+        const sub = document.getElementById('i_subtitle');
+        const meaning = document.getElementById('i_meaning');
+
+        if (score <= 7) {
+            title.innerText = "ALERTA CRÍTICO: CHURN OCULTO";
+            sub.innerText = `O discurso da ${emp} mascara a qualidade real, afastando clientes e prejudicando a receita.`;
+            meaning.innerText = "NÍVEL FRACO: Cliente não entende o valor. Risco de perda.";
+        } else if (score <= 14) {
+            title.innerText = "OPORTUNIDADE DE OTIMIZAÇÃO";
+            sub.innerText = `A ${emp} atrai atenção, mas apresenta atrito na conversão por falta de clareza ou jornada confusa.`;
+            meaning.innerText = "NÍVEL MÉDIO: Inconsistente. Funil apresentando falhas.";
+        } else {
+            title.innerText = "POTENCIAL DE ESCALA VALIDADO";
+            sub.innerText = `A ${emp} tem comunicação afiada e centrada no cliente. A base está pronta para escala.`;
+            meaning.innerText = "NÍVEL FORTE: Narrativa clara e focada em expansão.";
+        }
+        autoScale();
+    }
+
+    function autoScale() {
+        const pa = document.getElementById('preview-area');
+        const cv = document.getElementById('canvas');
+        if (!pa || !cv) return;
+        const containerWidth = pa.clientWidth - 40;
+        const scale = Math.min(1, containerWidth / 794);
+        cv.style.transform = `scale(${scale})`;
+        const marginX = (794 * (1 - scale)) / 2;
+        cv.style.marginLeft = `-${marginX}px`;
+        cv.style.marginRight = `-${marginX}px`;
+        cv.style.marginTop = '0';
+        cv.style.marginBottom = '0';
+    }
+
+    window.addEventListener('resize', autoScale);
+    window.addEventListener('load', () => { autoScale(); updateAll(); });
+
+    // ==================== REDIMENSIONAMENTO DA SIDEBAR ====================
+    const resizer = document.getElementById('resizer');
+    const sidebar = document.querySelector('.sidebar');
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        resizer.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        let newWidth = e.clientX;
+        newWidth = Math.min(800, Math.max(300, newWidth));
+        sidebar.style.width = `${newWidth}px`;
+        autoScale();
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            resizer.classList.remove('active');
+            document.body.style.cursor = 'default';
+        }
+    });
+
+    // ==================== INTEGRAÇÃO COM IA (PROMPT ATUALIZADO) ====================
+    const prompt_system = `Retorne EXCLUSIVAMENTE um objeto JSON. Você é um consultor FNW focado em Customer Experience e Otimização de Funil.
+Você deve analisar a empresa fornecida pelo usuário através do conteúdo da página web extraída.
+
+PRIMEIRA PARTE - CLASSIFICAÇÃO:
+Comece definindo a "Classificação do Bloco" de negócio (ex: "2 - Produtos Digitais/Recorrência Travada", "1 - E-commerce", etc.) e escreva uma Justificativa de 2 a 3 linhas sobre qual é o principal desafio de comunicação desse bloco.
+Em seguida, responda à Pergunta-Eixo: "A narrativa conversa com a necessidade real?" (sim/não) e justifique detalhadamente.
+
+SEGUNDA PARTE - PUV SCORE (NOVOS CRITÉRIOS):
+Gere uma nota de 0 a 4 e uma frase de justificativa curta (máx 15 palavras) para os 5 critérios:
+1. Diferenciação e Posicionamento (a marca se destaca da concorrência? tem um posicionamento claro?)
+2. Clareza da Proposta (a proposta de valor é imediatamente compreendida? benefício vs. característica)
+3. Linguagem e Conexão (a linguagem é adequada ao público-alvo? cria identificação?)
+4. Credibilidade e Confiança (há provas sociais, cases, depoimentos, selos que geram confiança?)
+5. Jornada e CTA (existe um caminho lógico para o usuário? os CTAs são claros e progressivos?)
+
+TERCEIRA PARTE - AÇÕES E FECHAMENTO:
+Forneça "Top 3 Ações Estratégicas" com Título Curto e um Texto descritivo.
+Crie uma "Frase de Abordagem para o Dono" impactante questionando o status quo da conversão.
+Crie uma "Recomendação Incompleta" que termine no meio de uma frase incitando a curisidade para o próximo passo.
+Por fim, escreva uma "Conclusão Final" resumindo o potencial da página e o que falta para destravar vendas.
+
+Você DEVE responder EXCLUSIVAMENTE em formato JSON (sem markdown, sem \`\`\`json, apenas o objeto literal) seguindo EXATAMENTE esta estrutura:
+{
+  "classificacao_bloco": "2 - Produtos Digitais/Recorrência Travada",
+  "justificativa_bloco": "O produto é uma plataforma SaaS...",
+  "resposta_eixo": "SIM, DE FORMA DIRETA E PRÁTICA. A página é...",
+  "nome_empresa": "Nome Extraído",
+  "c1_nota": 4,
+  "c1_justificativa": "A marca se diferencia claramente pelo seu atendimento humanizado e cases de sucesso.",
+  "c2_nota": 3,
+  "c2_justificativa": "A proposta é clara, mas poderia ser mais direta no headline.",
+  "c3_nota": 4,
+  "c3_justificativa": "Linguagem perfeitamente alinhada com o público, usa termos que geram conexão.",
+  "c4_nota": 1,
+  "c4_justificativa": "Não há depoimentos ou provas sociais visíveis na página.",
+  "c5_nota": 2,
+  "c5_justificativa": "CTA existe mas está no final; faltam micro-compromissos ao longo da jornada.",
+  "acao1_titulo": "Construir Diferenciação",
+  "acao1_texto": "Criar uma seção 'Por que nós?' destacando os diferenciais competitivos.",
+  "acao2_titulo": "Inserir Provas Sociais",
+  "acao2_texto": "Adicionar depoimentos em vídeo e estudos de caso com resultados.",
+  "acao3_titulo": "Estruturar Jornada com Micro-CTAs",
+  "acao3_texto": "Oferecer materiais ricos antes de pedir o contato comercial.",
+  "frase_abordagem": "Seus clientes em potencial não conseguem enxergar por que você é diferente; eles vão comparar apenas por preço.",
+  "recomendacao_incompleta": "Para construir autoridade e confiança rapidamente, o primeiro passo é estruturar uma...",
+  "conclusao": "A empresa entrega um bom produto, mas a comunicação ainda é muito genérica. Focar em diferenciação e provas sociais pode dobrar a taxa de conversão."
+}`;
+
+    function loadApiKey() {
+        const keys = JSON.parse(localStorage.getItem('puv_ai_keys') || '{"gemini":"", "groq":""}');
+        const provider = document.getElementById('f_ai_provider').value;
+        document.getElementById('f_api_key').value = keys[provider] || '';
+    }
+
+    function saveApiKey() {
+        const keys = JSON.parse(localStorage.getItem('puv_ai_keys') || '{"gemini":"", "groq":""}');
+        const provider = document.getElementById('f_ai_provider').value;
+        keys[provider] = document.getElementById('f_api_key').value;
+        localStorage.setItem('puv_ai_keys', JSON.stringify(keys));
+    }
+
+    document.addEventListener('DOMContentLoaded', loadApiKey);
+
+    async function generateWithAI() {
+        const provider = document.getElementById('f_ai_provider').value;
+        const apiKey = document.getElementById('f_api_key').value.trim();
+        const targetUrl = document.getElementById('f_ai_url').value.trim();
+
+        if (!apiKey) { alert("Por favor, insira sua Chave de API (API Key) para gerar o conteúdo."); return; }
+        if (!targetUrl || !targetUrl.startsWith('http')) { alert("Insira uma URL válida começando com http:// ou https://"); return; }
+
+        const btn = document.getElementById('btn_generate');
+        const spinner = document.getElementById('ai_spinner');
+        const icon = document.getElementById('ai_icon');
+        const btnText = document.getElementById('ai_btn_text');
+
+        btn.disabled = true;
+        spinner.style.display = 'block';
+        icon.style.display = 'none';
+        btnText.innerText = 'Lendo e Gerando...';
+
+        let jsonText = "";
+
+        try {
+            const jinaRes = await fetch(`https://r.jina.ai/${targetUrl}`);
+            if (!jinaRes.ok) throw new Error("Não foi possível acessar ou ler o site fornecido.");
+
+            const context = await jinaRes.text();
+            if (context.length < 50) throw new Error("O site parece estar vazio ou bloqueia robôs de leitura.");
+
+            if (provider === 'gemini') {
+                jsonText = await callGemini(apiKey, context);
+            } else {
+                jsonText = await callGroq(apiKey, context);
+            }
+
+            if (!jsonText) throw new Error("A API retornou um texto vazio.");
+
+            const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                console.log("Resposta Bruta da IA:", jsonText);
+                throw new Error("A resposta não contém um objeto JSON válido.");
+            }
+
+            jsonText = jsonMatch[0];
+            const data = JSON.parse(jsonText);
+            populateFormWithAI(data);
+
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao processar IA: " + error.message);
+        } finally {
+            btn.disabled = false;
+            spinner.style.display = 'none';
+            icon.style.display = 'block';
+            btnText.innerText = 'Gerar Automático';
+        }
+    }
+
+    async function callGemini(apiKey, context) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const payload = {
+            contents: [{
+                parts: [
+                    { text: prompt_system + "\n\nCONTEXTO DO CLIENTE AVALIADO:\n" + context }
+                ]
+            }],
+            generationConfig: { responseMimeType: "application/json", temperature: 0.4 }
+        };
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || "Erro Gemini");
+        return data.candidates[0].content.parts[0].text;
+    }
+
+    async function callGroq(apiKey, context) {
+        const url = "https://api.groq.com/openai/v1/chat/completions";
+        const payload = {
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.4,
+            messages: [
+                { role: "system", content: prompt_system },
+                { role: "user", content: "Responda APENAS com o JSON. \n\nCONTEXTO:\n" + context }
+            ]
+        };
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error?.message || "Erro Groq");
+        return data.choices[0].message.content;
+    }
+
+    function populateFormWithAI(data) {
+        localStorage.setItem('puv_last_dataset', JSON.stringify(data));
+        const url = document.getElementById('f_ai_url').value;
+        if (url) localStorage.setItem('puv_last_url', url);
+
+        if (data.classificacao_bloco) document.getElementById('f_class_bloco').value = data.classificacao_bloco;
+        if (data.justificativa_bloco) document.getElementById('f_class_just').value = data.justificativa_bloco;
+        if (data.resposta_eixo) document.getElementById('f_perg_eixo').value = data.resposta_eixo;
+        if (data.nome_empresa) document.getElementById('f_empresa').value = data.nome_empresa;
+
+        for (let i = 1; i <= 5; i++) {
+            let nota = data[`c${i}_nota`];
+            if (nota !== undefined) {
+                nota = Math.min(4, Math.max(0, parseInt(nota) || 0));
+                document.getElementById(`f_c${i}_v`).value = nota;
+            }
+            if (data[`c${i}_justificativa`]) document.getElementById(`f_c${i}_j`).value = data[`c${i}_justificativa`];
+        }
+
+        for (let i = 1; i <= 3; i++) {
+            if (data[`acao${i}_titulo`]) document.getElementById(`f_a${i}_t`).value = data[`acao${i}_titulo`];
+            if (data[`acao${i}_texto`]) document.getElementById(`f_a${i}_d`).value = data[`acao${i}_texto`];
+        }
+
+        if (data.frase_abordagem) document.getElementById('f_ab').value = data.frase_abordagem;
+        if (data.recomendacao_incompleta) document.getElementById('f_re').value = data.recomendacao_incompleta;
+        if (data.conclusao) document.getElementById('f_conclusao').value = data.conclusao;
+
+        updateAll();
+    }
+
+    function loadLastDataset() {
+        const savedData = localStorage.getItem('puv_last_dataset');
+        const savedUrl = localStorage.getItem('puv_last_url');
+        if (savedUrl) document.getElementById('f_ai_url').value = savedUrl;
+        if (savedData) {
+            try {
+                populateFormWithAI(JSON.parse(savedData));
+            } catch (e) {
+                alert("Não foi possível carregar o último teste.");
+            }
+        } else {
+            alert("Nenhum teste anterior salvo.");
+        }
+    }
+</script>
+</body>
+</html>
